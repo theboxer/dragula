@@ -146,6 +146,15 @@ function dragula (initialContainers, options) {
     _offsetX = getCoord('pageX', e) - offset.left;
     _offsetY = getCoord('pageY', e) - offset.top;
 
+    if (_item.dragZoom) {
+      _item.style.width = _item.clientWidth;
+      _item.style.height = _item.clientHeight;
+      _item.style.zoom = _item.dragZoom;
+
+      _offsetX = _item.clientWidth * 0.5;
+      _offsetY = _item.clientHeight * 0.5;
+    }
+
     classes.add(_copy || _item, 'gu-transit');
     renderMirrorImage();
     drag(e);
@@ -306,6 +315,9 @@ function dragula (initialContainers, options) {
     ungrab();
     removeMirrorImage();
     if (item) {
+      item.style.width = null;
+      item.style.height = null;
+      item.style.zoom = null;
       classes.rm(item, 'gu-transit');
     }
     if (_renderTimer) {
@@ -360,15 +372,25 @@ function dragula (initialContainers, options) {
     }
     e.preventDefault();
 
+    var item = _copy || _item;
+
     var clientX = getCoord('clientX', e);
     var clientY = getCoord('clientY', e);
-    var x = clientX - _offsetX;
-    var y = clientY - _offsetY;
+
+    var x;
+    var y;
+
+    if (item.dragZoom) {
+      x = (clientX / item.dragZoom) - _offsetX;
+      y = (clientY / item.dragZoom) - _offsetY;
+    } else {
+      x = clientX - _offsetX;
+      y = clientY - _offsetY;
+    }
 
     _mirror.style.left = x + 'px';
     _mirror.style.top = y + 'px';
 
-    var item = _copy || _item;
     var elementBehindCursor = getElementBehindPoint(_mirror, clientX, clientY);
     var dropTarget = findDropTarget(elementBehindCursor, clientX, clientY);
     var changed = dropTarget !== null && dropTarget !== _lastDropTarget;
