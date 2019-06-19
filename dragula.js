@@ -26,6 +26,8 @@ function dragula (initialContainers, options) {
   var _lastDropTarget = null; // last container item was over
   var _grabbed; // holds mousedown context until first mousemove
 
+  var _mirrorDimensions = false;
+
   var o = options || {};
   if (o.moves === void 0) { o.moves = always; }
   if (o.accepts === void 0) { o.accepts = always; }
@@ -147,10 +149,6 @@ function dragula (initialContainers, options) {
     _offsetY = getCoord('pageY', e) - offset.top;
 
     if (_item.dragZoom) {
-      _item.style.width = _item.clientWidth;
-      _item.style.height = _item.clientHeight;
-      _item.style.zoom = _item.dragZoom;
-
       _offsetX = _item.clientWidth * 0.5;
       _offsetY = _item.clientHeight * 0.5;
     }
@@ -314,10 +312,14 @@ function dragula (initialContainers, options) {
     var item = _copy || _item;
     ungrab();
     removeMirrorImage();
+
+    _mirrorDimensions = false;
+
     if (item) {
       item.style.width = null;
       item.style.height = null;
       item.style.zoom = null;
+      item.style.transform = null;
       classes.rm(item, 'gu-transit');
     }
     if (_renderTimer) {
@@ -374,19 +376,22 @@ function dragula (initialContainers, options) {
 
     var item = _copy || _item;
 
+    if (item.dragZoom && !_mirrorDimensions) {
+      _mirror.style.width = _mirror.clientWidth;
+      _mirror.style.height = _mirror.clientHeight;
+      _mirror.style.transform = 'scale(0.3)';
+
+      item.style.zoom = item.dragZoom;
+      item.style.width = _mirror.clientWidth;
+      item.style.height = _mirror.clientHeight;
+      _mirrorDimensions = true;
+    }
+
     var clientX = getCoord('clientX', e);
     var clientY = getCoord('clientY', e);
 
-    var x;
-    var y;
-
-    if (item.dragZoom) {
-      x = (clientX / item.dragZoom) - _offsetX;
-      y = (clientY / item.dragZoom) - _offsetY;
-    } else {
-      x = clientX - _offsetX;
-      y = clientY - _offsetY;
-    }
+    var x = clientX - _offsetX;
+    var y = clientY - _offsetY;
 
     _mirror.style.left = x + 'px';
     _mirror.style.top = y + 'px';
